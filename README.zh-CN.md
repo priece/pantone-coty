@@ -23,7 +23,7 @@
 ## 安装方法
 1. 克隆仓库：
    ```bash
-   git clone https://github.com/your-username/pantone-coty.git
+   git clone https://github.com/priece/pantone-coty.git
    ```
 2. 在Android Studio中打开项目
 3. 在Android设备或模拟器上构建并运行应用
