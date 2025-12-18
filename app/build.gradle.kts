@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.pantonecoty"
         minSdk = 24
         targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 20251
+        versionName = "2025.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
