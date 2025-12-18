@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
     private var initialY = 0f
     private var currentTranslationY = 0f
     private val SCREEN_HEIGHT by lazy { resources.displayMetrics.heightPixels }
-    private val SWIPE_THRESHOLD by lazy { SCREEN_HEIGHT * 0.2f } // 20% of screen height
+    private val SWIPE_THRESHOLD by lazy { SCREEN_HEIGHT * 0.1f } // 10% of screen height - 更容易触发翻页
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
