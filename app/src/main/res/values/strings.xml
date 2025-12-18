@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">PantoneCoty</string>
+    <string name="year">Year</string>
+    <string name="english_name">English Name</string>
+    <string name="chinese_name">Chinese Name</string>
+    <string name="pantone_number">Pantone Number</string>
+</resources>
