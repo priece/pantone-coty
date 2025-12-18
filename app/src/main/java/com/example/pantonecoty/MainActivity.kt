@@ -8,9 +8,7 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.ScrollView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GestureDetectorCompat
-import androidx.dynamicanimation.animation.DynamicAnimation
-import androidx.dynamicanimation.animation.SpringAnimation
-import androidx.dynamicanimation.animation.SpringForce
+
 import com.example.pantonecoty.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
@@ -18,9 +16,6 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
     private val colorData = mutableListOf<ColorYear>()
     private var currentIndex = 0
     private lateinit var gestureDetector: GestureDetectorCompat
-    private var isScrolling = false
-    private var translationY = 0f
-    private lateinit var springAnimation: SpringAnimation
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,16 +32,13 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
         // 初始化手势检测器
         gestureDetector = GestureDetectorCompat(this, this)
         
-        // 设置触摸监听器到根视图，确保整个屏幕都能响应滑动
-        binding.root.setOnTouchListener {
+        // 设置触摸监听器到根视图和ScrollView，确保整个屏幕都能响应滑动
+        val touchListener = View.OnTouchListener {
             _, event -> gestureDetector.onTouchEvent(event)
         }
         
-        // 初始化弹簧动画
-        springAnimation = SpringAnimation(binding.root, DynamicAnimation.TRANSLATION_Y)
-        springAnimation.spring = SpringForce()
-            .setStiffness(SpringForce.STIFFNESS_MEDIUM)
-            .setDampingRatio(SpringForce.DAMPING_RATIO_HIGH_BOUNCY)
+        binding.root.setOnTouchListener(touchListener)
+        binding.scrollView.setOnTouchListener(touchListener)
 
         // 读取CSV数据
         readCsvData()
@@ -154,12 +146,7 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
     }
     
     override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-        if (e1 != null) {
-            // 更新偏移量
-            translationY = e2.y - e1.y
-            binding.root.translationY = translationY
-            isScrolling = true
-        }
+        // 简化滚动处理，移除拖动效果
         return true
     }
     
@@ -170,8 +157,9 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
     override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
         if (e1 != null) {
             val diffY = e2.y - e1.y
-            val SWIPE_THRESHOLD = 100f
-            val SWIPE_VELOCITY_THRESHOLD = 100f
+            // 降低阈值，使滑动更加灵敏
+            val SWIPE_THRESHOLD = 50f
+            val SWIPE_VELOCITY_THRESHOLD = 50f
             
             // 检测滑动阈值和速度
             if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
@@ -189,18 +177,7 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
     }
     
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        val handled = gestureDetector.onTouchEvent(event)
-        
-        // 处理触摸结束事件，恢复原位
-        if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
-            if (isScrolling) {
-                isScrolling = false
-                // 使用弹簧动画恢复原位
-                springAnimation.animateToFinalPosition(0f)
-            }
-        }
-        
-        return handled || super.onTouchEvent(event)
+        return gestureDetector.onTouchEvent(event) || super.onTouchEvent(event)
     }
 
     data class ColorYear(

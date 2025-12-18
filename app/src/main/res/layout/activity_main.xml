@@ -25,6 +25,7 @@
 
     <!-- 下部详细信息区域 (黄金分割比例约38.2%) -->
     <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="16dp"
