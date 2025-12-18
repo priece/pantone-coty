@@ -16,6 +16,10 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
     private val colorData = mutableListOf<ColorYear>()
     private var currentIndex = 0
     private lateinit var gestureDetector: GestureDetectorCompat
+    private var initialY = 0f
+    private var currentTranslationY = 0f
+    private val SCREEN_HEIGHT by lazy { resources.displayMetrics.heightPixels }
+    private val SWIPE_THRESHOLD by lazy { SCREEN_HEIGHT * 0.2f } // 20% of screen height
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +38,14 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
         
         // 设置触摸监听器到根视图和ScrollView，确保整个屏幕都能响应滑动
         val touchListener = View.OnTouchListener {
-            _, event -> gestureDetector.onTouchEvent(event)
+            _, event -> 
+            val handled = gestureDetector.onTouchEvent(event)
+            
+            // 处理触摸结束事件
+            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+                handleTouchEnd()
+            }
+            handled
         }
         
         binding.root.setOnTouchListener(touchListener)
@@ -98,12 +109,12 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
     // 处理滑动过渡动画
     private fun animateColorChange(direction: Int) {
         val animationDuration = 300L
-        val screenHeight = resources.displayMetrics.heightPixels
+        val screenHeight = SCREEN_HEIGHT
         
         // 计算目标位置
         val targetTranslationY = if (direction > 0) -screenHeight.toFloat() else screenHeight.toFloat()
         
-        // 执行退出动画
+        // 执行退出动画，从当前位置开始
         binding.root.animate()
             .translationY(targetTranslationY)
             .setDuration(animationDuration / 2)
@@ -127,13 +138,53 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
                     .translationY(0f)
                     .setDuration(animationDuration / 2)
                     .setInterpolator(DecelerateInterpolator())
+                    .withEndAction {
+                        currentTranslationY = 0f
+                    }
                     .start()
             }
             .start()
     }
     
+    // 处理触摸结束事件
+    private fun handleTouchEnd() {
+        val direction: Int
+        val shouldChangeColor: Boolean
+        
+        if (currentTranslationY < -SWIPE_THRESHOLD) {
+            // 向上滑动超过阈值，显示上一年
+            direction = 1
+            shouldChangeColor = true
+        } else if (currentTranslationY > SWIPE_THRESHOLD) {
+            // 向下滑动超过阈值，显示下一年
+            direction = -1
+            shouldChangeColor = true
+        } else {
+            // 未超过阈值，恢复原位
+            direction = 0
+            shouldChangeColor = false
+        }
+        
+        if (shouldChangeColor) {
+            // 执行颜色切换动画
+            animateColorChange(direction)
+        } else {
+            // 恢复原位
+            binding.root.animate()
+                .translationY(0f)
+                .setDuration(300L)
+                .setInterpolator(DecelerateInterpolator())
+                .withEndAction {
+                    currentTranslationY = 0f
+                }
+                .start()
+        }
+    }
+    
     // 手势检测器方法
     override fun onDown(e: MotionEvent): Boolean {
+        initialY = e.y
+        currentTranslationY = 0f
         return true
     }
     
@@ -146,7 +197,13 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
     }
     
     override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-        // 简化滚动处理，移除拖动效果
+        if (e1 != null) {
+            // 计算当前偏移量，跟随手指移动
+            currentTranslationY = e2.y - e1.y
+            
+            // 将视图跟随手指移动
+            binding.root.translationY = currentTranslationY
+        }
         return true
     }
     
@@ -155,25 +212,8 @@ class MainActivity : AppCompatActivity(), GestureDetector.OnGestureListener {
     }
     
     override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
-        if (e1 != null) {
-            val diffY = e2.y - e1.y
-            // 降低阈值，使滑动更加灵敏
-            val SWIPE_THRESHOLD = 50f
-            val SWIPE_VELOCITY_THRESHOLD = 50f
-            
-            // 检测滑动阈值和速度
-            if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                if (diffY > 0) {
-                    // 向下滑动：显示下一年
-                    animateColorChange(-1)
-                } else {
-                    // 向上滑动：显示上一年
-                    animateColorChange(1)
-                }
-                return true
-            }
-        }
-        return false
+        // Fling 手势由 handleTouchEnd() 处理
+        return true
     }
     
     override fun onTouchEvent(event: MotionEvent): Boolean {
